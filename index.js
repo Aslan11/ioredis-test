@@ -1,16 +1,42 @@
 const Redis = require("ioredis");
 const debug = require('debug')('ioredis-test')
+const commandLineArgs = require('command-line-args')
 
-const redis = new Redis({
-  retryStrategy(times) {
-    console.log('Retry Attempt: '+times)
-    const delay = Math.min(times * 50, 2000);
-    return delay;
-  },
-  maxRetriesPerRequest: 0, // default: 20, only matters when enableOfflineQueue is set to true!
-  enableOfflineQueue: false, // default: true
-});
+const optionDefinitions = [
+  { name: 'default', alias: 'd', type: Boolean },
+  { name: 'exitOnMaxRetry', alias: 'e', type: Boolean },
+  { name: 'failFast', alias: 'f', type: Boolean }
+]
 
+const options = commandLineArgs(optionDefinitions);
+var redis = {};
+
+if (options.default) {
+  redis = new Redis();
+} else if (options.exitOnMaxRetry) {
+  redis = new Redis({
+    retryStrategy(times) {
+      console.log('Retry Attempt: '+times)
+      const delay = Math.min(times * 50, 2000);
+      return delay;
+    },
+    maxRetriesPerRequest: 3, // default: 20, only matters when enableOfflineQueue is set to true!
+    enableOfflineQueue: true, // default: true
+  });
+} else if (options.failFast) {
+  redis = new Redis({
+    retryStrategy(times) {
+      console.log('Retry Attempt: '+times)
+      const delay = Math.min(times * 50, 2000);
+      if (times >= 100){
+        process.exit(1); // bail after so many attempts
+      }
+      return delay;
+    },
+    maxRetriesPerRequest: 0, // default: 20, only matters when enableOfflineQueue is set to true!
+    enableOfflineQueue: false, // default: true
+  });
+}
 
 redis
 .on('connect', () => {
@@ -42,7 +68,7 @@ async function load () { // We need to wrap the loop into an async function for 
       if (e.name === 'MaxRetriesPerRequestError'){
         redis.quit().then(() => {
           console.error('stopping due to too many retries on redis connection')
-          process.exit(1)
+          process.exit(1) //K8's to kill and replace pod
         })
       } else {
         // commonly stream isn't writeable error (client no longer has connection)
