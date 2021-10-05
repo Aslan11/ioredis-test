@@ -7,7 +7,7 @@ const redis = new Redis({
     const delay = Math.min(times * 50, 2000);
     return delay;
   },
-  maxRetriesPerRequest: 20, // default: 20, only matters when enableOfflineQueue is set to true!
+  maxRetriesPerRequest: 0, // default: 20, only matters when enableOfflineQueue is set to true!
   enableOfflineQueue: false, // default: true
 });
 
@@ -46,6 +46,7 @@ async function load () { // We need to wrap the loop into an async function for 
         })
       } else {
         // commonly stream isn't writeable error (client no longer has connection)
+        console.error('Set Key: '+'iteration-'+i, ' Catch Error')
         console.error(e.name, e.message)
       }
     })
