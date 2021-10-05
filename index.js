@@ -80,4 +80,6 @@ async function load () { // We need to wrap the loop into an async function for 
   }
 }
 
-load();
+load().then(() => {
+  process.exit(1);
+});
