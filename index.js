@@ -30,6 +30,7 @@ if (options.exitOnMaxRetry) {
       console.log('Retry Attempt: '+times)
       const delay = Math.min(times * 50, 2000);
       if (times >= options.maxConnectionRetries){
+        console.log('Exiting due to retryStrategy limit')
         process.exit(1); // bail after so many attempts
       }
       return delay;
