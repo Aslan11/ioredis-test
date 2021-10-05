@@ -14,4 +14,6 @@
 ## Command Line Args
 - `--default / -d` - Initializes the Redis Client with the ioredis default config (blank)
 - `--exitOnMaxRetry / -e` - Initializes the Redis Client with a lower `maxRetriesPerRequest` Threshold, add's command exception handling to terminate process on `maxRetriesPerRequestError`
-- `--failFast / -f` - Initializes the Redis Client with `enableOfflineQueue` set to `false` and `maxRetriesPerRequest` to `0`, instead of queuing up commands in the offline queue, exceptions will be thrown immediately at the command level. The `retryStrategy` function has been modified to kill the process after 100 attempts to reconnect.
+- `--failFast / -f` - Initializes the Redis Client with `enableOfflineQueue` set to `false` and `maxRetriesPerRequest` to `0`, instead of queuing up commands in the offline queue, exceptions will be thrown immediately at the command level. The `retryStrategy` function has been modified to kill the process after 100 attempts to reconnect (or X attempts when X is passed in via `-r`).
+- `--iterations / -i` - how many `set` commands will be executed
+- `--maxConnectionRetries / -r` - how many times the `retryStrategy` function 

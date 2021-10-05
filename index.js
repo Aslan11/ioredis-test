@@ -3,17 +3,18 @@ const debug = require('debug')('ioredis-test')
 const commandLineArgs = require('command-line-args')
 
 const optionDefinitions = [
-  { name: 'default', alias: 'd', type: Boolean },
+  { name: 'default', alias: 'd', type: Boolean, defaultValue: true },
   { name: 'exitOnMaxRetry', alias: 'e', type: Boolean },
-  { name: 'failFast', alias: 'f', type: Boolean }
+  { name: 'failFast', alias: 'f', type: Boolean },
+  { name: 'iterations', alias: 'i', type: Number, defaultValue: 60},
+  { name: 'maxConnectionRetries', alias: 'r', type: Number, defaultValue: 100}
 ]
 
 const options = commandLineArgs(optionDefinitions);
 var redis = {};
 
-if (options.default) {
-  redis = new Redis();
-} else if (options.exitOnMaxRetry) {
+
+if (options.exitOnMaxRetry) {
   redis = new Redis({
     retryStrategy(times) {
       console.log('Retry Attempt: '+times)
@@ -28,7 +29,7 @@ if (options.default) {
     retryStrategy(times) {
       console.log('Retry Attempt: '+times)
       const delay = Math.min(times * 50, 2000);
-      if (times >= 100){
+      if (times >= options.maxConnectionRetries){
         process.exit(1); // bail after so many attempts
       }
       return delay;
@@ -36,6 +37,8 @@ if (options.default) {
     maxRetriesPerRequest: 0, // default: 20, only matters when enableOfflineQueue is set to true!
     enableOfflineQueue: false, // default: true
   });
+} else if (options.default) {
+  redis = new Redis();
 }
 
 redis
@@ -62,7 +65,7 @@ redis
 const delay = ms => new Promise(res => setTimeout(res, ms))
 
 async function load () { // We need to wrap the loop into an async function for this to work
-  for (var i = 0; i < 120; i++) {
+  for (var i = 0; i < options.iterations; i++) {
     // Set a key and value, catching the MaxRetriesPerRequestError
     redis.set('iteration-'+i, i).catch((e) => {
       if (e.name === 'MaxRetriesPerRequestError' && options.exitOnMaxRetry){
