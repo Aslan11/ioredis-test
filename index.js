@@ -71,7 +71,7 @@ async function load () { // We need to wrap the loop into an async function for 
     redis.set('iteration-'+i, i).catch((e) => {
       if (e.name === 'MaxRetriesPerRequestError' && options.exitOnMaxRetry){
         redis.quit().then(() => {
-          console.error('stopping due to too many retries on redis connection')
+          console.error('stopping due to too many retries on redis set command')
           process.exit(1) //K8's to kill and replace pod
         })
       } else {
